@@ -8,6 +8,11 @@ var uglify = require('gulp-uglify');
 var filter = require('gulp-filter');
 var pkg = require('./package.json');
 
+var paths = {
+  srcRoot: "./src",
+  distRoot: "./dist",
+}
+
 // Set the banner content
 var banner = ['/*!\n',
   ' * Start Bootstrap - <%= pkg.title %> v<%= pkg.version %> (<%= pkg.homepage %>)\n',
@@ -17,14 +22,32 @@ var banner = ['/*!\n',
   ''
 ].join('');
 
+// pipes html to dist
+gulp.task('html', function() {
+  return gulp.src(paths.srcRoot + '/**/*.html')
+    .pipe(gulp.dest(paths.distRoot))
+    .pipe(browserSync.reload({
+      stream: true
+    }))
+});
+
+// copies images to dist
+gulp.task('images', function() {
+  return gulp.src(paths.srcRoot + '/img/**/*')
+    .pipe(gulp.dest(paths.distRoot + '/img'))
+    .pipe(browserSync.reload({
+      stream: true
+    }))
+});
+
 // Compiles SCSS files from /scss into /css
 gulp.task('sass', function() {
-  return gulp.src('scss/freelancer.scss')
+  return gulp.src(paths.srcRoot + '/scss/freelancer.scss')
     .pipe(sass())
     .pipe(header(banner, {
       pkg: pkg
     }))
-    .pipe(gulp.dest('css'))
+    .pipe(gulp.dest(paths.distRoot + '/css'))
     .pipe(browserSync.reload({
       stream: true
     }))
@@ -32,14 +55,14 @@ gulp.task('sass', function() {
 
 // Minify compiled CSS
 gulp.task('minify-css', ['sass'], function() {
-  return gulp.src('css/freelancer.css')
+  return gulp.src(paths.srcRoot + '/css/freelancer.css')
     .pipe(cleanCSS({
       compatibility: 'ie8'
     }))
     .pipe(rename({
       suffix: '.min'
     }))
-    .pipe(gulp.dest('css'))
+    .pipe(gulp.dest(paths.distRoot + '/css'))
     .pipe(browserSync.reload({
       stream: true
     }))
@@ -47,7 +70,7 @@ gulp.task('minify-css', ['sass'], function() {
 
 // Minify custom JS
 gulp.task('minify-js', function() {
-  return gulp.src('js/freelancer.js')
+  return gulp.src(paths.srcRoot + '/js/freelancer.js')
     .pipe(uglify())
     .pipe(header(banner, {
       pkg: pkg
@@ -55,7 +78,7 @@ gulp.task('minify-js', function() {
     .pipe(rename({
       suffix: '.min'
     }))
-    .pipe(gulp.dest('js'))
+    .pipe(gulp.dest(paths.distRoot + '/js'))
     .pipe(browserSync.reload({
       stream: true
     }))
@@ -70,16 +93,16 @@ gulp.task('copy', function() {
       '!**/bootstrap-theme.*',
       '!**/*.map'
     ])
-    .pipe(gulp.dest('vendor/bootstrap'))
+    .pipe(gulp.dest(paths.distRoot + '/vendor/bootstrap'))
 
   gulp.src(['node_modules/jquery/dist/jquery.js', 'node_modules/jquery/dist/jquery.min.js'])
-    .pipe(gulp.dest('vendor/jquery'))
+    .pipe(gulp.dest(paths.distRoot + '/vendor/jquery'))
 
   gulp.src(['node_modules/jquery.easing/*.js'])
-    .pipe(gulp.dest('vendor/jquery-easing'))
+    .pipe(gulp.dest(paths.distRoot + '/vendor/jquery-easing'))
 
   gulp.src(['node_modules/magnific-popup/dist/*'])
-    .pipe(gulp.dest('vendor/magnific-popup'))
+    .pipe(gulp.dest(paths.distRoot + '/vendor/magnific-popup'))
 
   gulp.src([
       'node_modules/font-awesome/**',
@@ -89,11 +112,11 @@ gulp.task('copy', function() {
       '!node_modules/font-awesome/*.md',
       '!node_modules/font-awesome/*.json'
     ])
-    .pipe(gulp.dest('vendor/font-awesome'))
+    .pipe(gulp.dest(paths.distRoot + '/vendor/font-awesome'))
 })
 
 // Default task
-gulp.task('default', ['sass', 'minify-css', 'minify-js', 'copy']);
+gulp.task('default', ['html', 'sass', 'minify-css', 'minify-js', 'images', 'copy']);
 
 // Configure the browserSync task
 gulp.task('browserSync', function() {
@@ -105,11 +128,11 @@ gulp.task('browserSync', function() {
 })
 
 // Dev task with browserSync
-gulp.task('dev', ['browserSync', 'sass', 'minify-css', 'minify-js'], function() {
-  gulp.watch('scss/*.scss', ['sass']);
-  gulp.watch('css/*.css', ['minify-css']);
-  gulp.watch('js/*.js', ['minify-js']);
+gulp.task('dev', ['browserSync', 'html', 'sass', 'minify-css', 'images', 'minify-js'], function() {
+  gulp.watch(paths.srcRoot + '/scss/*.scss', ['sass']);
+  gulp.watch(paths.srcRoot + '/css/*.css', ['minify-css']);
+  gulp.watch(paths.srcRoot + '/js/*.js', ['minify-js']);
   // Reloads the browser whenever HTML or JS files change
-  gulp.watch('*.html', browserSync.reload);
-  gulp.watch('js/**/*.js', browserSync.reload);
+  gulp.watch(paths.srcRoot + '/*.html', browserSync.reload);
+  gulp.watch(paths.srcRoot + '/js/**/*.js', browserSync.reload);
 });
